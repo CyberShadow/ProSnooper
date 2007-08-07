@@ -1,0 +1,8 @@
+*.exe
+*.cfg
+*.ddp
+*.~*
+*.dcu
+*.dof
+*.dpk
+Thumbs.db
