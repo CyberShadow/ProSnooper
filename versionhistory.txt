@@ -1,0 +1,83 @@
+New in ProSnooper 2.0 final (build 201):
+
+- "Disable autoscroll" switch added. A lot of people
+  apparently didn't like this feature introduced in
+  build 200. You can disable autoscroll again by activating
+  this switch.
+  Note that the Find feature in the chatbox will be
+  broken if this isn't enabled.
+- ProSnooper now displays the topic correctly.
+
+
+  For people still using the old 1.x and 2.0 build 191
+  it is highly recommended to update to this version
+  because of the performance fixes.
+ 
+  Also, if you're using Windows Vista, the only way to
+  host or join games through ProSnooper is to use build 
+  200 or 201 and specify a custom path to WA.exe.
+
+New in ProSnooper 2.0 Beta 2 (build 200):
+
+- Performance issues fixed.
+- URLs in the chatbox are now clickable
+- Icons updated.
+- Auto-scroll workaround implemented for the chat box.
+  The chat box will now only scroll automatically
+  if the scroll bar is placed at the bottom.
+- You can now specify a custom path to wA.exe
+  for joining and hosting games.
+  If not set, ProSnooper will use the wa:// protocol
+  handler.
+- Find Dialog has been added to the chat box again
+- It is no longer possible for other clients 
+  to use the Buddy and Ignore status symbols as 
+  normal flags.
+- ProSnooper will show INVITEs, Invalid Target-
+  messages, topic changes and mode changes.
+- ProSnooper will raise the delay of getting the 
+  gamelist to one minute while you are marked as 
+  away.
+- Exception errors when updating the gamelist fixed
+
+New in ProSnooper 2.0 Beta 1 (build 191):
+
+- It is now possible to connect to other W:A servers.
+- A server list that can be updated to list new servers.
+- Away-log which allows you to see messages and highlights
+  received when using the /away command.
+- W:A-style color codes (\r, \b) are now displayed.
+- W:A-style game list
+- The "View details"-menu now displays the GameID and the
+  game hoster.
+- Channel list (which will also be displayed in case the
+  channel selected in the Login dialog doesn't exist on
+  the server)
+- You can now set the GameID and the Scheme parameters
+  when hosting a Direct IP game from ProSnooper.
+- ProSnoopers Tray Icon will now blink if you are high-
+  lighted or messaged.
+- The away-system sometimes failed; this has been fixed.
+- Spam protection for the "Send away reason on..." features
+- The command /quote which can send "raw" IRC commands.
+  Note: this command will desynchronize the user list when
+  commands like JOIN are used.
+- Ukrainian flag added. Apparantly I forgot to add this in
+  earlier versions.
+- "New flags"-fix for W:A. Note: Because of the flag fixes, 
+  there will be problems for earlier versions of ProSnooper 
+  to display flags and ranks.
+- The sound alerts will no longer freeze ProSnooper.
+
+New in ProSnooper 1.1.0:
+
+- ProSnooper now automatically removes hosted games when 
+  the game is no longer valid; the "remove game" button 
+  is removed
+- Bugs regarding the auto-away function fixed 
+- Bug in 1.1 build 100 regarding text input fixed 
+- The ability to change the font size
+- New default color scheme (to reset to defaults, remove 
+  the registry entry for prosnooper)
+- ProSnooper now retrieves your Wormnet name on first 
+  start.

@@ -40,7 +40,7 @@ var
 
 implementation
 
-uses mainform, buddyform, loginform;
+uses mainform, loginform, preferform;
 
 {$R *.dfm}
 
@@ -53,8 +53,8 @@ end;
 procedure TfrmdkNickList.Addtobuddylist1Click(Sender: TObject);
 begin
  if nickfrm.lvNicks.ItemIndex <> -1 then begin
- frmBuddies.lbBuddies.Items.Add(lvNicks.Selected.SubItems[1]);
- lvNicks.Selected.SubItemImages[0] := 74;
+ frmSettings.lbBuddies.Items.Add(lvNicks.Selected.SubItems[1]);
+ lvNicks.Selected.SubItemImages[0] := 75;
  END;
 end;
 
@@ -70,8 +70,8 @@ end;
 procedure TfrmdkNickList.Removefrombuddylist1Click(Sender: TObject);
 begin
  if nickfrm.lvNicks.ItemIndex <> -1 then begin
- frmBuddies.lbBuddies.Items.Delete(frmBuddies.lbBuddies.Items.IndexOf(lvNicks.Selected.SubItems[1]));
- lvNicks.Selected.SubItemImages[0] := 73;
+ frmSettings.lbBuddies.Items.Delete(frmSettings.lbBuddies.Items.IndexOf(lvNicks.Selected.SubItems[1]));
+ lvNicks.Selected.SubItemImages[0] := 74;
  frmMain.irc.whois(lvNicks.Selected.SubItems[1],'');
  END;
 end;
@@ -80,7 +80,7 @@ procedure TfrmdkNickList.Ignore1Click(Sender: TObject);
 begin
  if nickfrm.lvNicks.ItemIndex <> -1 then begin
  frmMain.lbIgnore.Items.Add(lvNicks.Selected.SubItems[1]);
- lvNicks.Selected.SubItemImages[0] := 75;
+ lvNicks.Selected.SubItemImages[0] := 76;
  end;
 end;
 
@@ -88,7 +88,7 @@ procedure TfrmdkNickList.Unignore1Click(Sender: TObject);
 begin
  if nickfrm.lvNicks.ItemIndex <> -1 then begin
  frmMain.lbIgnore.Items.Delete(frmMain.lbIgnore.Items.IndexOf(lvNicks.Selected.SubItems[1]));
- lvNicks.Selected.SubItemImages[0] := 73;
+ lvNicks.Selected.SubItemImages[0] := 74;
  frmMain.irc.whois(lvNicks.Selected.SubItems[1],'');
  end;
 end;

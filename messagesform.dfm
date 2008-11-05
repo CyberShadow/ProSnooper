@@ -1,6 +1,6 @@
 object frmMessages: TfrmMessages
-  Left = 195
-  Top = 107
+  Left = 218
+  Top = 121
   BorderStyle = bsDialog
   Caption = 'ProSnooper - Away log'
   ClientHeight = 215
@@ -31,7 +31,7 @@ object frmMessages: TfrmMessages
     Ctl3D = True
     ParentCtl3D = False
     ReadOnly = True
-    ScrollBars = ssVertical
+    ScrollBars = ssBoth
     TabOrder = 1
   end
   object Button1: TButton

@@ -42,12 +42,15 @@ uses mainform, preferform, loginform;
 
 procedure TfrmdkGmList.Jointhisgame1Click(Sender: TObject);
 var
- Scheme, ConnStr: String;
+ ConnStr, Scheme: String;
+ SL: TStringList;
 begin
  if lvGames.ItemIndex <> -1 then begin
- Scheme := frmMain.http.Get('http://'+frmLogin.cbServer.Text+'/wormageddonweb/RequestChannelScheme.asp?Channel='+ StringReplace(frmLogin.cbchan.Text,'#','',[]) );
- Scheme := StringReplace(Scheme,'<SCHEME=','',[rfIgnoreCase]);
+ SL := TStringList.Create;
+ SL.Text := frmMain.http.Get('http://'+frmLogin.cbServer.Text+'/wormageddonweb/RequestChannelScheme.asp?Channel='+ StringReplace(frmLogin.cbchan.Text,'#','',[]) );
+ Scheme := StringReplace(SL[0],'<SCHEME=','',[rfIgnoreCase]);
  Scheme := StringReplace(Scheme,'>','',[]);
+ SL.Free;
 
  if frmSettings.cbJoinGameAway.Checked then
   if frmMain.IsAway = False then
@@ -55,17 +58,24 @@ begin
 
 
   frmMain.AddRichLine(frmMain.rechat,'Joining <pcol='+ColorToString(frmSettings.colText1.Selected)+'>'+lvGames.Selected.SubItems[2]+' ('+lvGames.Selected.SubItems[3]+')</pcol>.');
-  ConnStr := lvGames.Selected.SubItems[3]+'?scheme='+Scheme+'&id='+lvGames.Selected.SubItems[4];
-  ShellExecute(Handle, PChar('Open'), PChar('wa://'+ConnStr), nil, nil, SW_SHOW);
+  ConnStr := 'wa://'+lvGames.Selected.SubItems[3]+'?scheme='+Scheme+'&gameid='+lvGames.Selected.SubItems[4];
+  if frmSettings.edExe.Text <> '' then
+   if LowerCase(ExtractFileName(frmsettings.edExe.Text)) = 'wormkit.exe' then
+    ShellExecute(Handle, PChar('Open'), PChar(frmSettings.edExe.Text), PChar('wa.exe '+ConnStr), nil, SW_SHOW)
+   else
+    ShellExecute(Handle, PChar('Open'), PChar(frmSettings.edExe.Text), PChar(ConnStr), nil, SW_SHOW)
+  else
+   ShellExecute(Handle, PChar('Open'), PChar(ConnStr), nil, nil, SW_SHOW);
+
  end;
 end;
 
 procedure TfrmdkGmList.Viewdetails1Click(Sender: TObject);
 begin
  if lvGames.ItemIndex <> -1 then begin
-  frmMain.AddRichLine(frmMain.rechat,'Game: <pcol='+ColorToString(frmSettings.colText1.Selected)+'>'+lvGames.Selected.SubItems[1]+'</pcol>');
-  frmMain.AddRichLine(frmMain.rechat,'Hostname: <pcol='+ColorToString(frmSettings.colText1.Selected)+'>'+lvGames.Selected.SubItems[3]+'</pcol>');
-  frmMain.AddRichLine(frmMain.rechat,'ID: <pcol='+ColorToString(frmSettings.colText1.Selected)+'>'+lvGames.Selected.SubItems[4]+'</pcol>');
+  frmMain.AddRichLine(frmMain.rechat,frmMain.MakeTimeStamp+'<b>Details for <pcol='+ColorToString(frmSettings.colText1.Selected)+'>'+lvGames.Selected.SubItems[1]+'</pcol> by <pcol='+ColorToString(frmSettings.colText1.Selected)+'>'+lvGames.Selected.SubItems[2]+'</pcol>:</b>');
+  frmMain.AddRichLine(frmMain.rechat,frmMain.MakeTimeStamp+'Hostname: <pcol='+ColorToString(frmSettings.colText1.Selected)+'>'+lvGames.Selected.SubItems[3]+'</pcol>');
+  frmMain.AddRichLine(frmMain.rechat,frmMain.MakeTimeStamp+'Game ID: <pcol='+ColorToString(frmSettings.colText1.Selected)+'>'+lvGames.Selected.SubItems[4]+'</pcol>');
  end;
 end;
 

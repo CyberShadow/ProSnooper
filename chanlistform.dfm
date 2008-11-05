@@ -1,8 +1,8 @@
 object frmChanList: TfrmChanList
-  Left = 724
-  Top = 364
+  Left = 217
+  Top = 127
   BorderStyle = bsDialog
-  Caption = 'Channel List'
+  Caption = 'ProSnooper - Channel List'
   ClientHeight = 240
   ClientWidth = 425
   Color = clBtnFace
@@ -13,6 +13,7 @@ object frmChanList: TfrmChanList
   Font.Style = []
   OldCreateOrder = False
   Position = poScreenCenter
+  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
   object Bevel1: TBevel

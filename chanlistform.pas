@@ -14,10 +14,11 @@ type
     Button2: TButton;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
   public
-    { Public declarations }
+    DoPart: Boolean;
   end;
 
 var
@@ -32,7 +33,9 @@ uses mainform, loginform;
 procedure TfrmChanList.Button1Click(Sender: TObject);
 begin
  if lvChans.ItemIndex <> -1 then begin
+  if DoPart = True then
   frmMain.irc.Part(frmLogin.cbchan.Text,'');
+  Sleep(100);
   frmMain.irc.Join(lvChans.Selected.Caption,'');
   frmMain.Caption := 'ProSnooper - '+lvChans.Selected.Caption;
   frmLogin.cbchan.Text := lvChans.Selected.Caption;
@@ -44,6 +47,11 @@ end;
 procedure TfrmChanList.Button2Click(Sender: TObject);
 begin
  Close;
+end;
+
+procedure TfrmChanList.FormCreate(Sender: TObject);
+begin
+ DoPart := True;
 end;
 
 end.

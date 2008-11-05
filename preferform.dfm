@@ -1,9 +1,9 @@
 object frmSettings: TfrmSettings
-  Left = 392
-  Top = 167
+  Left = 219
+  Top = 122
   BorderStyle = bsDialog
   Caption = 'ProSnooper - Settings'
-  ClientHeight = 374
+  ClientHeight = 424
   ClientWidth = 303
   Color = clBtnFace
   Font.Charset = ANSI_CHARSET
@@ -18,14 +18,14 @@ object frmSettings: TfrmSettings
   TextHeight = 13
   object Bevel1: TBevel
     Left = -8
-    Top = 336
+    Top = 384
     Width = 321
     Height = 9
     Shape = bsTopLine
   end
   object Button1: TButton
     Left = 216
-    Top = 344
+    Top = 392
     Width = 81
     Height = 25
     Caption = 'OK'
@@ -36,8 +36,8 @@ object frmSettings: TfrmSettings
     Left = 8
     Top = 8
     Width = 289
-    Height = 313
-    ActivePage = TabSheet3
+    Height = 361
+    ActivePage = TabSheet1
     MultiLine = True
     TabOrder = 0
     object TabSheet1: TTabSheet
@@ -99,7 +99,7 @@ object frmSettings: TfrmSettings
         Caption = 'Background'
       end
       object colText2: TColorBox
-        Left = 112
+        Left = 120
         Top = 80
         Width = 145
         Height = 22
@@ -109,17 +109,17 @@ object frmSettings: TfrmSettings
         TabOrder = 2
       end
       object colText1: TColorBox
-        Left = 112
+        Left = 120
         Top = 48
         Width = 145
         Height = 22
-        Selected = 9613191
+        Selected = 14074262
         Style = [cbStandardColors, cbExtendedColors, cbCustomColor, cbPrettyNames]
         ItemHeight = 16
         TabOrder = 1
       end
       object colQuits: TColorBox
-        Left = 112
+        Left = 120
         Top = 240
         Width = 145
         Height = 22
@@ -129,7 +129,7 @@ object frmSettings: TfrmSettings
         TabOrder = 7
       end
       object colPrivate: TColorBox
-        Left = 112
+        Left = 120
         Top = 112
         Width = 145
         Height = 22
@@ -139,7 +139,7 @@ object frmSettings: TfrmSettings
         TabOrder = 3
       end
       object colParts: TColorBox
-        Left = 112
+        Left = 120
         Top = 208
         Width = 145
         Height = 22
@@ -149,7 +149,7 @@ object frmSettings: TfrmSettings
         TabOrder = 6
       end
       object colJoins: TColorBox
-        Left = 112
+        Left = 120
         Top = 176
         Width = 145
         Height = 22
@@ -159,7 +159,7 @@ object frmSettings: TfrmSettings
         TabOrder = 5
       end
       object colBackground: TColorBox
-        Left = 112
+        Left = 120
         Top = 16
         Width = 145
         Height = 22
@@ -168,7 +168,7 @@ object frmSettings: TfrmSettings
         TabOrder = 0
       end
       object colActions: TColorBox
-        Left = 112
+        Left = 120
         Top = 144
         Width = 145
         Height = 22
@@ -176,6 +176,36 @@ object frmSettings: TfrmSettings
         Style = [cbStandardColors, cbExtendedColors, cbCustomColor, cbPrettyNames]
         ItemHeight = 16
         TabOrder = 4
+      end
+    end
+    object TabSheet6: TTabSheet
+      Caption = 'Buddies'
+      ImageIndex = 5
+      object lbBuddies: TListBox
+        Left = 8
+        Top = 8
+        Width = 185
+        Height = 313
+        ItemHeight = 13
+        TabOrder = 0
+      end
+      object Button8: TButton
+        Left = 200
+        Top = 43
+        Width = 73
+        Height = 25
+        Caption = 'Delete'
+        TabOrder = 1
+        OnClick = Button8Click
+      end
+      object Button9: TButton
+        Left = 200
+        Top = 11
+        Width = 73
+        Height = 25
+        Caption = 'Add'
+        TabOrder = 2
+        OnClick = Button9Click
       end
     end
     object TabSheet2: TTabSheet
@@ -190,21 +220,21 @@ object frmSettings: TfrmSettings
       end
       object Bevel2: TBevel
         Left = 96
-        Top = 112
+        Top = 104
         Width = 169
         Height = 9
         Shape = bsTopLine
       end
       object Label7: TLabel
         Left = 32
-        Top = 72
+        Top = 64
         Width = 38
         Height = 13
         Caption = 'Format:'
       end
       object Label8: TLabel
         Left = 16
-        Top = 104
+        Top = 96
         Width = 77
         Height = 13
         Caption = 'Channel Actions'
@@ -218,28 +248,28 @@ object frmSettings: TfrmSettings
       end
       object Bevel10: TBevel
         Left = 40
-        Top = 216
+        Top = 208
         Width = 225
         Height = 9
         Shape = bsTopLine
       end
       object Label16: TLabel
         Left = 16
-        Top = 208
+        Top = 200
         Width = 23
         Height = 13
         Caption = 'Chat'
       end
       object Label19: TLabel
         Left = 24
-        Top = 232
+        Top = 224
         Width = 50
         Height = 13
         Caption = 'Font size: '
       end
       object edTimeStamp: TEdit
         Left = 80
-        Top = 72
+        Top = 64
         Width = 57
         Height = 21
         TabOrder = 1
@@ -257,7 +287,7 @@ object frmSettings: TfrmSettings
       end
       object cbQuits: TCheckBox
         Left = 24
-        Top = 176
+        Top = 168
         Width = 97
         Height = 17
         Caption = 'Show quits'
@@ -267,7 +297,7 @@ object frmSettings: TfrmSettings
       end
       object cbParts: TCheckBox
         Left = 24
-        Top = 152
+        Top = 144
         Width = 97
         Height = 17
         Caption = 'Show parts'
@@ -277,7 +307,7 @@ object frmSettings: TfrmSettings
       end
       object cbJoins: TCheckBox
         Left = 24
-        Top = 128
+        Top = 120
         Width = 97
         Height = 17
         Caption = 'Show joins'
@@ -287,7 +317,7 @@ object frmSettings: TfrmSettings
       end
       object edFntSize: TComboBox
         Left = 80
-        Top = 232
+        Top = 224
         Width = 57
         Height = 21
         ItemHeight = 13
@@ -305,6 +335,22 @@ object frmSettings: TfrmSettings
           '36'
           '48'
           '72')
+      end
+      object cbBlink: TCheckBox
+        Left = 24
+        Top = 256
+        Width = 241
+        Height = 17
+        Caption = 'Blink tray icon'
+        TabOrder = 6
+      end
+      object cbDisableScroll: TCheckBox
+        Left = 24
+        Top = 280
+        Width = 105
+        Height = 17
+        Caption = 'Disable autoscroll'
+        TabOrder = 7
       end
     end
     object TabSheet3: TTabSheet
@@ -427,6 +473,16 @@ object frmSettings: TfrmSettings
         TabOrder = 7
         OnClick = Button7Click
       end
+      object Button10: TButton
+        Left = 192
+        Top = 216
+        Width = 73
+        Height = 25
+        Caption = 'Stop sounds'
+        TabOrder = 9
+        Visible = False
+        OnClick = Button10Click
+      end
     end
     object TabSheet4: TTabSheet
       Caption = 'Games'
@@ -473,6 +529,20 @@ object frmSettings: TfrmSettings
         Height = 9
         Shape = bsTopLine
       end
+      object Label22: TLabel
+        Left = 16
+        Top = 272
+        Width = 137
+        Height = 13
+        Caption = 'Use W:A exe to open games'
+      end
+      object Bevel11: TBevel
+        Left = 160
+        Top = 280
+        Width = 105
+        Height = 9
+        Shape = bsTopLine
+      end
       object cbHostGameAnn: TCheckBox
         Left = 32
         Top = 40
@@ -497,7 +567,6 @@ object frmSettings: TfrmSettings
         Width = 185
         Height = 21
         TabOrder = 2
-        Text = 'I'#39'm hosting a game.'
       end
       object cbGetIP: TCheckBox
         Left = 32
@@ -523,7 +592,22 @@ object frmSettings: TfrmSettings
         Width = 185
         Height = 21
         TabOrder = 5
-        Text = 'I'#39'm playing a game.'
+      end
+      object edExe: TEdit
+        Left = 56
+        Top = 296
+        Width = 153
+        Height = 21
+        TabOrder = 6
+      end
+      object Button11: TButton
+        Left = 216
+        Top = 296
+        Width = 25
+        Height = 21
+        Caption = '...'
+        TabOrder = 7
+        OnClick = Button11Click
       end
     end
     object TabSheet5: TTabSheet
@@ -582,19 +666,26 @@ object frmSettings: TfrmSettings
   end
   object mp: TMediaPlayer
     Left = 40
-    Top = 336
+    Top = 392
     Width = 29
     Height = 28
     VisibleButtons = [btPlay]
-    Display = TabSheet1
     Visible = False
     TabOrder = 2
+    OnNotify = mpNotify
   end
   object OpenDialog1: TOpenDialog
     Filter = 
       'Wave files (*.wav)|*.wav|Windows Media Audio (*.wma)|*.wma|MP3 a' +
       'udio (*.mp3)|*.mp3|All files (*.*)|*.*'
     Left = 8
-    Top = 336
+    Top = 392
+  end
+  object OpenDialog2: TOpenDialog
+    Filter = 
+      'WA.exe, WormKit.exe|wa.exe;wormkit.exe|Executable files (*.exe)|' +
+      '*.exe'
+    Left = 72
+    Top = 392
   end
 end

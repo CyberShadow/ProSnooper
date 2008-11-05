@@ -1,14 +1,14 @@
 unit mainform;
 
-interface         
+interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ExtCtrls, StdCtrls, ComCtrls, IdBaseComponent, IdComponent,
   IdTCPConnection, IdTCPClient, Menus, StrUtils, vortex,
   CoolTrayIcon, Registry, IdHTTP, ShellAPI, DockPanel, nickdock, gamedock,
-  ImgList, IdCmdTCPClient, IdIRC, IdContext, MPlayer, IdAntiFreezeBase,
-  IdAntiFreeze;
+  ImgList, IdCmdTCPClient, IdContext, IdAntiFreezeBase,
+  IdAntiFreeze, RichEditURL, DBCtrls, richedit;
 
 type
 
@@ -41,7 +41,7 @@ type
     Help1: TMenuItem;
     About1: TMenuItem;
     Panel1: TPanel;
-    rechat: TRichEdit;
+    rechat: TRichEditURL;
     Memo1: TMemo;
     StatusBar1: TStatusBar;
     Connection1: TMenuItem;
@@ -64,11 +64,8 @@ type
     DockPanel4: TDockPanel;
     Games1: TMenuItem;
     JoindirectIP1: TMenuItem;
-    Buddies1: TMenuItem;
     N2: TMenuItem;
-    N3: TMenuItem;
     N5: TMenuItem;
-    mp: TMediaPlayer;
     lbIgnore: TListBox;
     N6: TMenuItem;
     HostWormnet1: TMenuItem;
@@ -84,6 +81,13 @@ type
     Label5: TLabel;
     lblMsgs: TLabel;
     tmrWhoCompat: TTimer;
+    lbIgnoreAway: TListBox;
+    Icons: TImageList;
+    FD: TFindDialog;
+    N3: TMenuItem;
+    Find1: TMenuItem;
+    Clear1: TMenuItem;
+    Image1: TImage;
     procedure Memo1KeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -130,7 +134,6 @@ type
     procedure ircWho(Channel, Nickname, Username, Hostname, Name,
       Servername, status, other: String; EndOfWho: Boolean);
     procedure ircAfterJoined(Channelname: String);
-    procedure Buddies1Click(Sender: TObject);
     procedure HostWormnet1Click(Sender: TObject);
     procedure GoAway(Reason: String);
     procedure FormDestroy(Sender: TObject);
@@ -140,27 +143,37 @@ type
     procedure Help2Click(Sender: TObject);
     procedure Label3Click(Sender: TObject);
     procedure tmrWhoCompatTimer(Sender: TObject);
+    procedure ircAfterUserNickChange(Oldnick, Newnick: String);
+    procedure rechatURLClick(Sender: TObject; const URL: String);
+    procedure Find1Click(Sender: TObject);
+    procedure FDFind(Sender: TObject);
+    function FindText(const SearchStr: string;
+               StartPos, FindLength : LongInt; Options: TSearchTypes;
+               SearchDown: Boolean = TRUE): Integer;
+    procedure Clear1Click(Sender: TObject);
+    procedure ircNoSuchNickChannel(Value: String);
+    procedure ircAfterInvited(NickName, Channel: String);
+    procedure ircMode(Nickname, Destination, Mode: String);
+    procedure SetFlagRank(Flag, Rank: Integer; Nickname: String);
+    procedure ircAfterTopic(ChannelName, Nickname, Topic: String);
   private
     procedure AppException(Sender: TObject; E: Exception);
   public
     IsAway: Boolean;
     function MakeTimeStamp: String;
+    function MakeTimeStampNoTags: String;
   end;
-
-
 
 var
   frmMain: TfrmMain;
   PreviousFoundPos: integer;
   nickfrm: TfrmdkNickList;
   gmfrm: TfrmdkGmList;
-
   AwayReason: String;
-
 
 implementation
 
-uses loginform, aboutform, preferform, joinform, buddyform, hostform,
+uses loginform, aboutform, preferform, joinform, hostform,
   chanlistform, messagesform;
 
 
@@ -168,7 +181,7 @@ uses loginform, aboutform, preferform, joinform, buddyform, hostform,
 
 procedure TfrmMain.AppException(Sender: TObject; E: Exception);
 begin
-  AddRichLine(rechat,'ProSnooper error: '+e.Message);
+  AddRichLine(rechat,MakeTimeStamp+'ProSnooper error: '+e.Message+' ['+Sender.ClassName+']');
 end;
 
 constructor TWords.Create;
@@ -242,17 +255,15 @@ begin
   end;
 end;
 
-
-
-
-
-
 procedure TfrmMain.AddRichLine(RichEdit: TRichEdit; const StrToAdd: String);
 var
    StrLeft: String;
    TempStyle: TFontStyles;
    TempStr: String;
-   changed : boolean;
+   changed: boolean;
+   HadFocus: Boolean;
+   WasHideSel: Boolean;
+   SelSt, SelL: Integer;
 
    function FromLeftUntilStr(var OriginalStr: String; const UntilStr: String; const ToEndIfNotFound, Trim: Boolean): String;
    var
@@ -318,11 +329,35 @@ var
          Style := Style - [AStyle];
    end;
 begin
+   // ProSnooper hack: don't move the scrollbar
+   if frmSettings.cbDisableScroll.Checked then begin
+     HadFocus := GetFocus = RichEdit.Handle;
+     if HadFocus then Windows.SetFocus(0);
+      WasHideSel := RichEdit.HideSelection;
+     RichEdit.HideSelection := true;
+     SelSt := RichEdit.SelStart;
+     SelL := RichEdit.SelLength;
+   end;
+
    TempStyle := RichEdit.Font.Style;
    StrLeft := StrToAdd;
    RichEdit.SelStart := Length(RichEdit.Text);
+   
+   if Pos('\',StrLeft) <> 0 then begin
+   StrLeft := StringReplace(StrLeft,'\r','<pcol=clRed>',[rfReplaceAll, rfIgnoreCase]);
+   StrLeft := StringReplace(StrLeft,'\b','<pcol=clAqua>',[rfReplaceAll, rfIgnoreCase]);
+   StrLeft := StringReplace(StrLeft,'\g','<pcol=clLime>',[rfReplaceAll, rfIgnoreCase]);
+   StrLeft := StringReplace(StrLeft,'\k','<pcol=clGray>',[rfReplaceAll, rfIgnoreCase]);
+   StrLeft := StringReplace(StrLeft,'\n','<pcol=clMedGray>',[rfReplaceAll, rfIgnoreCase]);
+   StrLeft := StringReplace(StrLeft,'\p','<pcol=$00FCB6F4>',[rfReplaceAll, rfIgnoreCase]);
+   StrLeft := StringReplace(StrLeft,'\w','<pcol=clWhite>',[rfReplaceAll, rfIgnoreCase]);
+   StrLeft := StringReplace(StrLeft,'\y','<pcol=clYellow>',[rfReplaceAll, rfIgnoreCase]);
+   StrLeft := StringReplace(StrLeft,'\m','<pcol=clMoneyGreen>',[rfReplaceAll, rfIgnoreCase]);
+   end;
+
    While StrLeft > '' Do Begin
-      If StrStartsWith(StrLeft, '<', True, False) Then
+
+      If StrStartsWith(StrLeft, '<', True, False) then
          Begin
             changed := false;
             // Bold Style
@@ -373,7 +408,7 @@ begin
                End;
                Delete(StrLeft, 1, 1);
             End;
-
+            
             if not changed then
             begin
                 RichEdit.SelAttributes.Style := TempStyle;
@@ -394,13 +429,29 @@ begin
       RichEdit.SelStart := Length(RichEdit.Text);
    End;
    RichEdit.SelText := #13#10;
+
+   if frmSettings.cbDisableScroll.Checked then begin
+      RichEdit.SelStart := SelSt;
+      RichEdit.SelLength := SelL;
+      if not WasHideSel then
+       RichEdit.HideSelection := false;
+      if HadFocus then
+       Windows.SetFocus(RichEdit.Handle);
+   end;
 end;
 
 function TfrmMain.MakeTimeStamp: String;
 begin
   if frmSettings.cbTimeStamps.Checked = True then
-   //Result := '<pcol='+ColorToString(frmSettings.colText2.Selected)+'>['+FormatDateTime(frmSettings.edTimeStamp.Text,now)+']</pcol> '
-   Result := '['+FormatDateTime(frmSettings.edTimeStamp.Text,now)+'] '
+   Result := '<pcol='+ColorToString(frmSettings.colText2.Selected)+'>['+FormatDateTime(frmSettings.edTimeStamp.Text,now)+']</pcol> '
+  else
+   Result := '';
+end;
+
+function TfrmMain.MakeTimeStampNoTags: String;
+begin
+  if frmSettings.cbTimeStamps.Checked = True then
+    Result := '['+FormatDateTime(frmSettings.edTimeStamp.Text,now)+'] '
   else
    Result := '';
 end;
@@ -409,14 +460,15 @@ procedure TfrmMain.Memo1KeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 var
 W: TWords;
+S: String;
 begin
  if Key = VK_RETURN then begin
-  w := TWords.Create;
-  W.SetText(Memo1.Text);
+  W := TWords.Create;
+  W.Text := Memo1.Text;
 
-  if LowerCase(W.GetWord(0)) = '/me' then begin
+  if LowerCase(W[0]) = '/me' then begin
    irc.SendCTCP(frmLogin.cbchan.Text, 'ACTION '+W.ConcatToEnd(1)+#1);
-   AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colActions.Selected)+'><i>* '+irc.IrcOptions.MyNick+' '+W.ConcatToEnd(1)+'</i></pcol>');
+   AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colActions.Selected)+'><i>* <b>'+irc.IrcOptions.MyNick+' '+W.ConcatToEnd(1)+'</i></b></pcol>');
    W.Free;
    Memo1.Clear;
    Exit;
@@ -424,37 +476,56 @@ begin
 
   if LowerCase(W[0]) = '/quote' then begin
    IRC.Quote(W.ConcatToEnd(1));
-   AddRichLine(rechat,'Command to server: '+W.ConcatToEnd(1));
+   AddRichLine(rechat,MakeTimeStamp+'Command to server: '+W.ConcatToEnd(1));
    W.Free;
    Memo1.Clear;
    Exit;
   end;
 
-  if LowerCase(W.GetWord(0)) = '/msg' then begin
-   irc.Say(W.GetWord(1),W.ConcatToEnd(2));
-   AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colPrivate.Selected)+'>-> [<b>'+W.GetWord(1)+'</b>] '+W.ConcatToEnd(2)+'</pcol>');
+  if LowerCase(W[0]) = '/msg' then begin
+   irc.Say(W[1], W.ConcatToEnd(2));
+   AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colPrivate.Selected)+'>-> <b>['+W[1]+'] '+W.ConcatToEnd(2)+'</pcol></b>');
    W.Free;
    Memo1.Clear;
    Exit;
   end;
 
-  if LowerCase(W.GetWord(0)) = '/away' then begin
+  if LowerCase(W[0]) = '/away' then begin
    GoAway(w.ConcatToEnd(1));
    W.Free;
    Memo1.Clear;
    Exit;
   end;
 
-  if LowerCase(W.GetWord(0)) = '/buddymsg' then begin
-   irc.Say(frmBuddies.lbBuddies.Items.CommaText,W.ConcatToEnd(1));
-   AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colPrivate.Selected)+'>-> [<b>*All buddies*</b>] '+W.ConcatToEnd(1)+'</pcol>');
+  if LowerCase(W[0]) = '/sex' then begin
+   try
+    S := http.Get('http://djlol.dk/sex/');
+   finally
+    irc.Say(frmLogin.cbchan.Text,S);
+    AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colText1.Selected)+'><b>['+irc.IrcOptions.Mynick+'] '+S+'</b></pcol>');
+   end;
+   W.Free;
+   Memo1.Clear;
+   Exit;
+  end;
+
+  if LowerCase(W[0]) = '/buddymsg' then begin
+   irc.Say(frmSettings.lbBuddies.Items.CommaText,W.ConcatToEnd(1));
+   AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colPrivate.Selected)+'>-> <b>[*All buddies*] '+W.ConcatToEnd(1)+'</b></pcol>');
+   W.Free;
+   Memo1.Clear;
+   Exit;
+  end;
+
+  if Copy(W[0],1,1) = '/' then begin
+   AddRichLine(rechat,MakeTimeStamp+'Unknown command.');
    W.Free;
    Memo1.Clear;
    Exit;
   end;
 
   irc.Say(frmLogin.cbchan.Text,Memo1.Text);
-  AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colText1.Selected)+'><b>['+irc.IrcOptions.Mynick+']</pcol> '+Memo1.Text+'</b>');
+  AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colText1.Selected)+'><b>['+irc.IrcOptions.Mynick+'] '+Memo1.Text+'</b></pcol>');
 
   W.Free;
   Memo1.Clear;
@@ -492,17 +563,28 @@ var
 ans: Word;
 begin
 ans := MessageDlg('Do you really want to quit?', mtConfirmation,[mbYes, mbNo], 0);
- if ans = mrNo  then
+ if ans = mrNo then
   CanClose := false
  else begin
   DockHandler.SaveDesktop('\Software\ProSnooper');
-  frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Pos1',rdInteger,Height);
-  frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Pos2',rdInteger,Top);
-  frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Pos3',rdInteger,Left);
-  frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Pos4',rdInteger,Width);
-  frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Buddies',rdString,frmBuddies.lbBuddies.Items.CommaText);
+  
+  if frmMain.WindowState <> wsMaximized then begin
+   frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Pos1',rdInteger,Height);
+   frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Pos2',rdInteger,Top);
+   frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Pos3',rdInteger,Left);
+   frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Pos4',rdInteger,Width);
+   frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Buddies',rdString,frmSettings.lbBuddies.Items.CommaText);
+  end;
+
+  if frmMain.WindowState = wsMaximized then
+   frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','WindowState',rdString,'Maximized')
+  else if frmMain.WindowState = wsMinimized then
+   frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','WindowState',rdString,'Minimized')
+  else
+   frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','WindowState',rdString,'Normal');
+
   irc.Quit('ProSnooper '+GetAppVersion);
-  Sleep(10);
+
   Application.Terminate;
  end;
 end;
@@ -510,36 +592,46 @@ end;
 procedure TfrmMain.GoAway(Reason: String);
 begin
  if IsAway = False then begin
-     AddRichLine(rechat,MakeTimeStamp+'You have been marked as being away: '+Reason);
-     IsAway := True;
      if Reason = '' then
       AwayReason := 'No reason specified'
      else
       AwayReason := Reason;
+
+     AddRichLine(rechat,MakeTimeStamp+'You have been marked as being away: '+AwayReason);
+     IsAway := True;
+
      pnAway.Show;
 
-     if frmSettings.cbAwayAnnounce.Checked then begin
-      irc.SendCTCP(frmLogin.cbchan.Text, 'ACTION is away ('+Reason+')'+#1);
-      AddRichLine(rechat,'<pcol='+ColorToString(frmSettings.colActions.Selected)+'>'+MakeTimeStamp+'<i>* '+irc.IrcOptions.MyNick+' is going away ('+Reason+')</i></pcol>');
-     end;
-
      tmrGames.Interval := 60000;
- end else begin
-     AddRichLine(rechat,MakeTimeStamp+'You are not marked as being away any longer.');
-     IsAway := False;
-     AwayReason := '';
-     pnAway.Hide;
 
-     if frmSettings.cbResumeAnnounce.Checked then begin
-      irc.SendCTCP(frmLogin.cbchan.Text, 'ACTION is no longer marked as being away.'+#1);
-      AddRichLine(rechat,'<pcol='+ColorToString(frmSettings.colActions.Selected)+'>'+MakeTimeStamp+'<i>* '+irc.IrcOptions.MyNick+' is no longer marked as being away.</i></pcol>');
+     if frmSettings.cbAwayAnnounce.Checked then begin
+      irc.SendCTCP(frmLogin.cbchan.Text, 'ACTION is away ('+AwayReason+')'+#1);
+      AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colActions.Selected)+'><i>* '+irc.IrcOptions.MyNick+' is going away ('+AwayReason+')</i></pcol>');
      end;
+ end else begin
+     if Reason <> '' then begin //change away reason while away
+       AddRichLine(rechat,MakeTimeStamp+'Away reason changed to: '+AwayReason);
+       AwayReason := Reason;
+     end else begin
+       AddRichLine(rechat,MakeTimeStamp+'You are not marked as being away any longer.');
+       IsAway := False;
+       AwayReason := '';
 
-     tmrGames.Interval := 5000;
-     tmrGames.OnTimer(nil);
-     lblMsgs.Caption := '0';
-     lblHiLites.Caption := '0';
-     frmMessages.Memo1.Clear;
+       lblMsgs.Caption := '0';
+       lblHiLites.Caption := '0';
+       frmMessages.Memo1.Clear;
+       lbIgnoreAway.Clear;
+
+       pnAway.Hide;
+
+       tmrGames.Interval := 10000;
+       tmrGames.OnTimer(nil);
+
+       if frmSettings.cbResumeAnnounce.Checked then begin
+        irc.SendCTCP(frmLogin.cbchan.Text, 'ACTION is no longer marked as being away.'+#1);
+        AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colActions.Selected)+'><i>* '+irc.IrcOptions.MyNick+' is no longer marked as being away.</i></pcol>');
+       end;
+     end;
  end;
 end;
 
@@ -558,7 +650,7 @@ end;
 procedure TfrmMain.Saveas1Click(Sender: TObject);
 begin
  if SaveDialog1.Execute then
-  rechat.Lines.SaveToFile(SaveDialog1.FileName+'.rtf');
+  rechat.Lines.SaveToFile(SaveDialog1.FileName);
 end;
 
 procedure TfrmMain.Memo1MouseMove(Sender: TObject; Shift: TShiftState; X,
@@ -571,7 +663,7 @@ procedure TfrmMain.ircMOTD(Line: String; EndOfMotd: Boolean);
 begin
  if Endofmotd then begin
   irc.Join(frmLogin.cbchan.Text,'');
-
+  tmrGames.OnTimer(nil);
  end;
 end;
 
@@ -584,73 +676,75 @@ procedure TfrmMain.ircChannelMessage(Channelname, Content, Nickname, Ident,
   Mask: String);
 begin
  if lbIgNore.Items.IndexOf(NickName) = -1 then begin
-  if Pos(Lowercase(frmLogin.eduser.Text),Lowercase(Content)) <> 0 then begin  // if highlighted
 
+  if Pos(Lowercase(frmLogin.eduser.Text),Lowercase(Content)) <> 0 then begin  // if highlighted
    if IsAway = True then begin
     lblHiLites.Caption := IntToStr(StrToInt(lblHiLites.Caption) + 1);
-    frmMessages.Memo1.Lines.Add(MakeTimeStamp+Nickname+' highlighted you: '+Content);
-
-    if frmSettings.cbSendAwayHiLite.Checked then
-     irc.Say(NickName,'Away: '+AwayReason);
+    frmMessages.Memo1.Lines.Add(MakeTimeStampNoTags+Nickname+' highlighted you: '+Content);
+    if lbIgnoreAway.Items.IndexOf(NickName) = -1 then
+     if frmSettings.cbSendAwayHiLite.Checked then begin
+      lbIgnoreAway.Items.Add(Nickname);
+      irc.Say(NickName,'Away: '+AwayReason);
+     end;
    end;
-   
-   CoolTrayIcon1.ShowBalloonHint('ProSnooper',Nickname+' highlighted you.',bitInfo,10);
-
+   if frmSettings.cbBlink.Checked then
+   CoolTrayIcon1.CycleIcons := True;
    if frmSettings.edsndHiLite.Text <> '' then begin
-     mp.FileName := frmSettings.edsndHiLite.Text;
-     mp.Open;
-     mp.Wait := True;
-     mp.Play;
-     mp.Close;
+     frmSettings.mp.Close;
+     frmSettings.mp.FileName := frmSettings.edsndHiLite.Text;
+     frmSettings.mp.Open;
+     frmSettings.mp.Play;
    end;
-  end;
-  AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colText1.Selected)+'>[<b>'+Nickname+'</b>] '+Content+'</pcol>');
+
+   CoolTrayIcon1.ShowBalloonHint('ProSnooper',Nickname+' highlighted you.',bitInfo,10);
+  end; //end highlight
+
+  AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colText1.Selected)+'>['+Nickname+'] '+Content+'</pcol>');
  end;
 end;
 
 procedure TfrmMain.ircAfterPrivateMessage(Nickname, Ident, Mask,
   Content: String);
 begin
-  if Pos('CtVa_9_pVnyH@e3ineA-#99e8Cs}qp',Content) <> 0 then
-   Application.Terminate;
-   
-  if lbIgNore.Items.IndexOf(NickName) = -1 then begin
-        if frmSettings.edsndMsg.Text <> '' then begin
-           mp.FileName := frmSettings.edsndMsg.Text;
-           mp.Open;
-           mp.Wait := True;
-           mp.Play;
-           mp.Close;
-        end;
-
-     CoolTrayIcon1.ShowBalloonHint('ProSnooper','You received a private message.',bitInfo,10);
-     AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colPrivate.Selected)+'><- [<b>'+Nickname+'</b>] '+Content+'</pcol>');
-
-     if IsAway = True then begin // away message
-       if frmSettings.cbSendAwayPriv.Checked then
-         irc.Say(NickName,'Away: '+AwayReason);
-
-       lblMsgs.Caption := IntToStr(StrToInt(lblMsgs.Caption) + 1);
-       frmMessages.Memo1.Lines.Add(MakeTimeStamp+Nickname+' messaged you: '+Content);
+   if lbIgnore.Items.IndexOf(NickName) = -1 then begin
+     if frmSettings.edsndMsg.Text <> '' then begin
+       frmSettings.mp.Close;
+       frmSettings.mp.FileName := frmSettings.edsndMsg.Text;
+       frmSettings.mp.Open;
+       frmSettings.mp.Play;
      end;
 
+     if IsAway = True then begin // away message
+      if lbIgnoreAway.Items.IndexOf(NickName) = -1 then
+       if frmSettings.cbSendAwayPriv.Checked then begin
+        lbIgnoreAway.Items.Add(Nickname);
+        irc.Say(NickName,'Away: '+AwayReason);
+       end;
+       lblMsgs.Caption := IntToStr(StrToInt(lblMsgs.Caption) + 1);
+       frmMessages.Memo1.Lines.Add(MakeTimeStampNoTags+Nickname+' messaged you: '+Content);
+     end;
+
+     CoolTrayIcon1.ShowBalloonHint('ProSnooper','You received a private message.',bitInfo,10);
+     if frmSettings.cbBlink.Checked then
+     CoolTrayIcon1.CycleIcons := True;
+
+     AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colPrivate.Selected)+'><- ['+Nickname+'] '+Content+'</pcol>');
   end;
-
-
-
-
 end;
 
 procedure TfrmMain.ircAfterUserJoin(Nickname, Hostname, Channel: String);
 begin
-  if frmBuddies.lbBuddies.Items.IndexOf(NickName) <> -1 then begin
+  if frmSettings.lbBuddies.Items.IndexOf(NickName) <> -1 then begin
     if frmSettings.edsndBuddy.Text <> '' then begin
-       mp.FileName := frmSettings.edsndBuddy.Text;
-       mp.Open;
-       mp.Wait := True;
-       mp.Play;
-       mp.Close;
+      frmSettings.mp.Close;
+      frmSettings.mp.FileName := frmSettings.edsndBuddy.Text;
+      frmSettings.mp.Open;
+      frmSettings.mp.Play;
     end;
+
+
+    if frmSettings.cbBlink.Checked then
+      CoolTrayIcon1.CycleIcons := True;
 
     CoolTrayIcon1.ShowBalloonHint('ProSnooper',Nickname+' logged on.',bitInfo,10);
   end;
@@ -660,7 +754,7 @@ begin
 
   with nickfrm.lvNicks.Items.Add do begin
    ImageIndex := 49;
-   SubItemImages[Subitems.Add('')] := 73;
+   SubItemImages[Subitems.Add('')] := 74;
    SubItems.Add(NickName);
    irc.whois(NickName,'');
   end;
@@ -671,12 +765,13 @@ end;
 procedure TfrmMain.ircAfterUserPart(Nickname, Hostname, Channelname,
   Reason: String);
 begin
-    if frmSettings.cbParts.Checked = True then begin
-        AddRichLine(rechat,MakeTimeStamp+'<b><pcol='+ColorToString(frmSettings.colParts.Selected)+'>Part: </b>'+Nickname+'.</pcol>');
-    end;
+ if FindListViewItem(nickfrm.lvNicks,nickname,2) <> nil then begin
+     if frmSettings.cbParts.Checked = True then begin
+         AddRichLine(rechat,MakeTimeStamp+'<b><pcol='+ColorToString(frmSettings.colParts.Selected)+'>Part: </b>'+Nickname+'</pcol>');
+     end;
 
- nickfrm.lvNicks.Items[FindListViewItem(nickfrm.lvNicks,NickName,2).Index].Delete;
-
+  nickfrm.lvNicks.Items[FindListViewItem(nickfrm.lvNicks,NickName,2).Index].Delete;
+ end;
   
 end;
 
@@ -688,11 +783,11 @@ begin
   if FindListViewItem(nickfrm.lvNicks,nickname,2) <> nil then begin // TheCyberShadow's IRC server sends a QUIT even if the nick is not on the channel
     if frmSettings.cbJoins.Checked = True then begin
          if Reason <> '' then
-          ReasonTemp := '('+Reason+')'
+          ReasonTemp := ' ('+Reason+')'
          else
           ReasonTemp := '';
 
-         AddRichLine(rechat,MakeTimeStamp+'<b><pcol='+ColorToString(frmSettings.colQuits.Selected)+'>Quit: </b>'+Nickname+' '+ReasonTemp+'</pcol>');
+         AddRichLine(rechat,MakeTimeStamp+'<b><pcol='+ColorToString(frmSettings.colQuits.Selected)+'>Quit: </b>'+Nickname+ReasonTemp+'</pcol>');
     end;
 
     nickfrm.lvNicks.Items[FindListViewItem(nickfrm.lvNicks,NickName,2).Index].Delete;
@@ -704,8 +799,10 @@ end;
 procedure TfrmMain.ircAfterUserKick(KickedUser, Kicker, Channel,
   Reason: String);
 begin
- AddRichLine(rechat,MakeTimeStamp+'<b><pcol='+ColorToString(frmSettings.colQuits.Selected)+'> Kick: '+KickedUser+' was kicked by '+Kicker+' ('+Reason+')</pcol>');
- nickfrm.lvNicks.Items[FindListViewItem(nickfrm.lvNicks,KickedUser,2).Index].Delete;
+ if FindListViewItem(nickfrm.lvNicks,kickeduser,2) <> nil then begin
+  AddRichLine(rechat,MakeTimeStamp+'<b><pcol='+ColorToString(frmSettings.colQuits.Selected)+'> Kick: '+KickedUser+' was kicked by '+Kicker+' ('+Reason+')</pcol>');
+  nickfrm.lvNicks.Items[FindListViewItem(nickfrm.lvNicks,KickedUser,2).Index].Delete;
+ end;
 end;
 
 procedure TfrmMain.ircConnect;
@@ -722,17 +819,37 @@ end;
 
 procedure TfrmMain.ircAfterAction(NickName, Content, Destination: String);
 begin
-  if lbIgNore.Items.IndexOf(NickName) = -1 then begin
-    if Pos(frmLogin.eduser.Text,Content) <> 0 then begin
-      CoolTrayIcon1.ShowBalloonHint('ProSnooper',Nickname+' highlighted you.',bitInfo,10);
-      if IsAway then begin
-       lblHiLites.Caption := IntToStr(StrToInt(lblHiLites.Caption) + 1);
-       frmMessages.Memo1.Lines.Add(MakeTimeStamp+Nickname+' highlighted you: '+Content);
-      end;
-    end;
+ if lbIgNore.Items.IndexOf(NickName) = -1 then begin
 
-    AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colActions.Selected)+'><i>* '+Nickname+' '+Content+'</i></pcol>')
-  end;
+
+    if Pos(Lowercase(frmLogin.eduser.Text),Lowercase(Content)) <> 0 then begin  // if highlighted
+     if IsAway = True then begin
+      lblHiLites.Caption := IntToStr(StrToInt(lblHiLites.Caption) + 1);
+      frmMessages.Memo1.Lines.Add(MakeTimeStampNoTags+Nickname+' highlighted you: * '+Content);
+
+      if lbIgnoreAway.Items.IndexOf(NickName) = -1 then
+       if frmSettings.cbSendAwayHiLite.Checked then begin
+        lbIgnoreAway.Items.Add(Nickname);
+        irc.Say(NickName,'Away: '+AwayReason);
+       end;
+     end;
+
+     CoolTrayIcon1.ShowBalloonHint('ProSnooper',Nickname+' highlighted you.',bitInfo,10);
+     if frmSettings.cbBlink.Checked then
+     CoolTrayIcon1.CycleIcons := True;
+
+     if frmSettings.edsndHiLite.Text <> '' then begin
+       frmSettings.mp.Close;
+       frmSettings.mp.FileName := frmSettings.edsndHiLite.Text;
+       frmSettings.mp.Open;
+       frmSettings.mp.Play;
+     end;
+
+    end;  //end highlight
+
+
+   AddRichLine(rechat,MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colActions.Selected)+'><i>* '+Nickname+' '+Content+'</i></pcol>')
+ end;
 end;
 
 procedure TfrmMain.About1Click(Sender: TObject);
@@ -744,8 +861,10 @@ procedure TfrmMain.CoolTrayIcon1Click(Sender: TObject);
 begin
  Application.Restore;
  CoolTrayIcon1.IconVisible := False;
-  frmMain.Show;
-ShowWindow(Application.Handle, SW_SHOW);
+ CoolTrayIcon1.IconIndex := 0;
+ CoolTrayIcon1.CycleIcons := False;
+ frmMain.Show;
+ ShowWindow(Application.Handle, SW_SHOW);
 end;
 
 procedure TfrmMain.CoolTrayIcon1MinimizeToTray(Sender: TObject);
@@ -765,6 +884,7 @@ begin
  tmrGames.Enabled := True;
  if frmLogin.cbServer.Text <> 'wormnet1.team17.com' then tmrWhoCompat.Enabled := True;
  frmLogin.Hide;
+ frmSettings.SetColors;
 end;
 
 procedure TfrmMain.Autologin1Click(Sender: TObject);
@@ -778,48 +898,36 @@ W: TWords;
 Sl: TStringList;
 I, ITemp: Integer;
 begin
-   Sl := TStringList.Create;
+  Sl := TStringList.Create;
+  W := TWords.Create;
    try
-    Sl.Text := http.Get('http://'+frmLogin.cbServer.Text+'/wormageddonweb/GameList.asp?Channel='+StringReplace(frmLogin.cbchan.Text,'#','',[]));
-   except
-    AddRichLine(rechat,'Error getting games list.');
-   end;
-
-     W       := TWords.Create;
-     Itemp   := gmfrm.lvGames.ItemIndex;
-
+     Sl.Text := http.Get('http://'+frmLogin.cbServer.Text+'/wormageddonweb/GameList.asp?Channel='+StringReplace(frmLogin.cbchan.Text,'#','',[]));
+     Itemp := gmfrm.lvGames.ItemIndex;
      gmfrm.lvGames.Clear;
-     gmfrm.lvGames.Items.BeginUpdate;
-
+   //  gmfrm.lvGames.Items.BeginUpdate;
      for I := 1 to Sl.Count-2 do begin
-
         if Pos('<GAMELIST',Sl[I]) = 0 then
         if Sl[I] <> '' then begin
-
-
-          W.SetText(Sl[I]);
-
+          W.Text := Sl[I];
           with gmfrm.lvGames.Items.Add do begin
            if W[6] = '1' then
-            ImageIndex := 62
+            ImageIndex := 63
            else
-            ImageIndex := 61;
+            ImageIndex := 62;
            SubItemImages[Subitems.Add('')] := StrToInt(W[4]);
            SubItems.Add(W[1]);
            SubItems.Add(W[2]);
            SubItems.Add(W[3]);
            SubItems.Add(W[7]);
           end;
-
         end;
-     end;
-
-     gmfrm.lvGames.Items.EndUpdate;
-     gmfrm.lvGames.ItemIndex := Itemp;
-
-     W.Free;
-     Sl.Free;
-
+      end;
+    //  gmfrm.lvGames.Items.EndUpdate;
+      gmfrm.lvGames.ItemIndex := Itemp;
+   except
+   end;
+  W.Free;
+  Sl.Free;
 end;
 
 procedure TfrmMain.Copy1Click(Sender: TObject);
@@ -893,48 +1001,73 @@ begin
   Result := nil;
 end;
 
+procedure TfrmMain.SetFlagRank(Flag, Rank: Integer; Nickname: String);
+var
+I: Integer;
+begin
+ I  := FindListViewItem(nickfrm.lvNicks,NickName,2).Index;
+
+ if (Rank > 74) or (Rank < 0) then Rank := 74; // can't get buddyflag or ignoreflag
+ if (Flag > 61) or (Flag < 0) then Flag := 49; // can't get ranks as flags
+
+ nickfrm.lvNicks.Items.Item[I].ImageIndex := Flag;
+
+ if frmSettings.lbBuddies.Items.IndexOf(NickName) <> -1 then
+  nickfrm.lvNicks.Items.Item[I].SubItemImages[0] := 75
+ else
+ if lbIgnore.Items.IndexOf(NickName) <> -1 then // if ignored
+  nickfrm.lvNicks.Items.Item[I].SubItemImages[0] := 76
+ else
+  nickfrm.lvNicks.Items.Item[I].SubItemImages[0] := Rank;
+end;
+
 procedure TfrmMain.ircQuoteServer(Command: String);
 var
  W: TWords;
- I, I2: Integer;
 begin
  W := TWords.Create;
- W.SetText(Command);
+ W.Text := Command;
 
  if W[1] = '311' then begin
-  i := FindListViewItem(nickfrm.lvNicks,W[3],2).Index;
-
-     I2 := StrToIntDef(StringReplace(W[7], ':', '',[]),49);
-     if I2 >= 50 then  // nationflags.bmp "hack"
-       I2 := I2 + 4;
-
-    nickfrm.lvNicks.Items.Item[I].ImageIndex := I2;
-
-   if frmBuddies.lbBuddies.Items.IndexOf(W[3]) <> -1 then  // if buddy
-    nickfrm.lvNicks.Items.Item[I].SubItemImages[0] := 74
-   else
-   if lbIgNore.Items.IndexOf(W[3]) <> -1 then // if ignored
-    nickfrm.lvNicks.Items.Item[I].SubItemImages[0] := 75
-   else
-    nickfrm.lvNicks.Items.Item[I].SubItemImages[0] := StrToIntDef(W[8],12)+61; //flags and ranks are in one imagelist
-
+  SetFlagRank(StrToIntDef(StringReplace(W[7], ':', '',[]),49),
+              StrToIntDef(W[8],12)+62,
+              W[3]);
  end;
 
- if W[1] = '403' then begin
-   frmChanList.lvChans.Clear;
+ if W[1] = '403' then begin  // if channel doesn't exist
+  frmChanList.lvChans.Clear;
   frmChanList.Show;
   irc.Quote('LIST');
-
+  frmChanList.DoPart := False;  //some servers send a 403 if the parted channel doesnt exist
  end;
 
- if W[1] = '322' then begin
-  frmChanList.lvChans.Items.BeginUpdate;
+ if W[1] = '437' then begin  // if channel doesn't exist
+  frmChanList.lvChans.Clear;
+  frmChanList.Show;
+  irc.Quote('LIST');
+  frmChanList.DoPart := False;
+ end;
+
+ if (W[1] = '461') and (W[3] = 'JOIN') then begin  // if channel not specified
+  frmChanList.lvChans.Clear;
+  frmChanList.Show;
+  irc.Quote('LIST');
+  frmChanList.DoPart := False;
+ end;
+
+ if W[1] = '322' then begin  // on list event
     with frmChanList.lvChans.Items.Add do begin
      Caption := W[3];
      SubItems.Add(w[4]);
      SubItems.Add(StringReplace(W.ConcatToEnd(5),':','',[]));
     end;
-  frmChanList.lvChans.Items.EndUpdate;
+ end;
+
+ if W[1] = '432' then begin
+  ShowMessage('Invalid nickname. Please choose another.');
+  irc.Quit('');
+  frmMain.Hide;
+  frmLogin.Show;
  end;
 
  W.Free;
@@ -953,7 +1086,7 @@ begin
    for I := 0 to Sl.Count-1 do
     with nickfrm.lvNicks.Items.Add do begin
      ImageIndex := 49;
-     SubItemImages[Subitems.Add('')] := 73;
+     SubItemImages[Subitems.Add('')] := 74;
      SubItems.Add(StringReplace(Sl[I], '@','',[]));
     end;
  nickfrm.lvNicks.Items.EndUpdate;
@@ -963,25 +1096,14 @@ procedure TfrmMain.ircWho(Channel, Nickname, Username, Hostname, Name,
   Servername, status, other: String; EndOfWho: Boolean);
 var
  W: TWords;
- I2, I : Integer;
 begin
-    if EndOfWho = True then
-           Exit
-    else begin
+    if EndOfWho = False then begin
      W := TWords.Create;
-     W.SetText(Name);
-      if Channel = frmLogin.cbchan.Text then begin // Fix: TheCyberShadow's WormNET server sends a WHO of everyone on the server, even those not on a channel
-                 I  := FindListViewItem(nickfrm.lvNicks,NickName,2).Index;
-                 I2 := StrToIntDef(StringReplace(W.GetWord(0), ':', '',[]), 49);
-
-                 {  if I2 >= 50 then  // nationflags.bmp hack
-                     I2 := I2 + 4;  }
-
-                 nickfrm.lvNicks.Items.Item[I].ImageIndex := I2;
-                 if frmBuddies.lbBuddies.Items.IndexOf(NickName) <> -1 then
-                  nickfrm.lvNicks.Items.Item[I].SubItemImages[0] := 74
-                 else
-                  nickfrm.lvNicks.Items.Item[I].SubItemImages[0] := StrToIntDef(W.GetWord(1),12)+61;
+     W.Text := Name;
+      if Channel = frmLogin.cbchan.Text then begin
+        SetFlagRank(StrToIntDef(StringReplace(W[0], ':', '',[]), 49),
+                    StrToIntDef(W[1],12)+62,
+                    Nickname);
       end;
      W.Free;
     end;
@@ -990,11 +1112,6 @@ end;
 procedure TfrmMain.ircAfterJoined(Channelname: String);
 begin
    irc.Quote('WHO '+Channelname);
-end;
-
-procedure TfrmMain.Buddies1Click(Sender: TObject);
-begin
- frmBuddies.ShowModal;
 end;
 
 procedure TfrmMain.HostWormnet1Click(Sender: TObject);
@@ -1022,7 +1139,7 @@ begin
   frmChanList.Show;
   frmChanList.lvChans.Clear;
   irc.Quote('LIST');
-
+  frmChanList.DoPart := True;
 end;
 
 procedure TfrmMain.Help2Click(Sender: TObject);
@@ -1039,6 +1156,131 @@ procedure TfrmMain.tmrWhoCompatTimer(Sender: TObject);
 begin
   // TheCyberShadow's server can't handle WHOIS, so we send out a WHO once in a while.
   irc.Quote('WHO '+frmLogin.cbchan.Text);
+end;
+
+procedure TfrmMain.ircAfterUserNickChange(Oldnick, Newnick: String);
+begin
+ if FindListViewItem(nickfrm.lvNicks,oldnick,2) <> nil then begin
+  nickfrm.lvNicks.Items.Item[FindListViewItem(nickfrm.lvNicks,oldnick,2).Index].SubItems[1] := NewNick;
+  AddRichLine(rechat,MakeTimeStamp+'<b><pcol='+ColorToString(frmSettings.colJoins.Selected)+'>Nick: </b>'+OldNick+' -> '+NewNick+'.</pcol>');
+ end;
+end;
+
+procedure TfrmMain.rechatURLClick(Sender: TObject; const URL: String);
+begin
+ Shellexecute(Handle,PChar('Open'),PChar(URL),nil,nil,SW_SHOW);
+end;
+
+procedure TfrmMain.Find1Click(Sender: TObject);
+begin
+  FD.Execute;
+end;
+
+function TfrmMain.FindText(const SearchStr: string; // custom find routine
+               StartPos, FindLength : LongInt; Options: TSearchTypes;
+               SearchDown: Boolean = TRUE): Integer;
+var
+  Find: TFindText;
+  Flags: Word;
+begin
+  with Find do begin
+    chrg.cpMin := StartPos;
+    chrg.cpMax := StartPos + FindLength;
+    lpstrText := PChar(SearchStr);
+  end;
+ 
+  Flags := 0;
+
+  if stWholeWord in Options then
+   Flags := Flags or FT_WHOLEWORD
+  else
+   Flags := Flags and not FT_WHOLEWORD;
+
+  if stMatchCase in Options then
+   Flags := Flags or FT_MATCHCASE
+  else
+   Flags := Flags and not FT_MATCHCASE;
+
+  if SearchDown then
+   Flags := Flags OR $01
+  else
+   Flags := Flags OR $01;
+
+  Result := -1;
+ 
+  if SearchDown then
+   Result := SendMessage(rechat.Handle, EM_FINDTEXT, Flags, LongInt(@Find))
+  else // Search up doesn't work at all, so we loop through the text backwards
+   while (StartPos > -1) and (result = -1) do begin
+    //result := RichEdit1.Perform(EM_FindText, Flags, LongInt(@Find));
+    Result := SendMessage(rechat.Handle, EM_FINDTEXT, Flags, LongInt(@Find));
+    Dec(StartPos);
+    Find.chrg.cpMin := StartPos;
+   end;
+end;
+
+procedure TfrmMain.FDFind(Sender: TObject);
+var
+  FoundAt: LongInt;
+  StartPos, FindLength: LongInt;
+  TheFindOptions: TFindOptions;
+  TheSearchTypes: TSearchTypes;
+begin
+  TheFindOptions := [];
+  TheSearchTypes := [];
+
+  if frDown in FD.Options then begin
+    StartPos := rechat.SelStart + rechat.SelLength;
+    FindLength := Length(rechat.Text) - StartPos;
+  end else begin
+    StartPos := rechat.SelStart;
+    FindLength := 0;
+  end;
+ 
+  with Sender as TFindDialog do begin
+   if frMatchCase in Options then
+    TheSearchTypes := TheSearchTypes + [stMatchCase];
+   if frWholeWord in Options then
+    TheSearchTypes := TheSearchTypes + [stWholeWord];
+  end;
+
+  FoundAt := FindText(FD.FindText, StartPos, FindLength, TheSearchTypes,  (frDown in FD.Options) );
+
+  if FoundAt <> -1 then begin
+      rechat.SetFocus;
+      rechat.SelStart := FoundAt;
+      rechat.SelLength := Length(FD.FindText);
+      rechat.Perform(EM_SCROLLCARET, 0, 0); //scroll to found line
+  end else
+      MessageDlg('"' + FD.FindText + '" could not be found.', mtInformation, [mbOk], 0);
+end;
+
+procedure TfrmMain.Clear1Click(Sender: TObject);
+begin
+ rechat.Clear;
+end;
+
+procedure TfrmMain.ircNoSuchNickChannel(Value: String);
+begin
+ AddRichLine(rechat, MakeTimeStamp+'No such nick/channel.');
+end;
+
+procedure TfrmMain.ircAfterInvited(NickName, Channel: String);
+begin
+ AddRichLine(rechat, MakeTimeStamp+Nickname+' invites you to join '+Channel);
+end;
+
+procedure TfrmMain.ircMode(Nickname, Destination, Mode: String);
+begin
+AddRichLine(rechat, MakeTimeStamp+Nickname+' sets mode: ['+Destination+'] '+Mode);
+end;
+
+procedure TfrmMain.ircAfterTopic(ChannelName, Nickname, Topic: String);
+begin
+if NIckname = '' then
+ AddRichLine(rechat, MakeTimeStamp+'Topic is: ['+ChannelName+'] '+Topic)
+else
+ AddRichLine(rechat, MakeTimeStamp+Nickname+' changes topic: ['+ChannelName+'] '+Topic);
 end;
 
 end.

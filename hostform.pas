@@ -48,7 +48,7 @@ end;
 
 procedure TfrmHost.Button1Click(Sender: TObject);
 var
- IP, Scheme, GameID: String;
+ IP, Scheme, GameID, Connstr: String;
  SL: TStringList;
  I: Integer;
  W: TWords;
@@ -56,60 +56,83 @@ var
 begin
   Timer1.OnTimer(nil); //remove last game
 
-  SL := TStringList.Create;
-  SL.Text := frmMain.http.Get('http://'+frmLogin.cbServer.Text+'/wormageddonweb/RequestChannelScheme.asp?Channel='+ StringReplace(frmLogin.cbchan.Text,'#','',[]) );
-  Scheme := StringReplace(SL[0],'<SCHEME=','',[rfIgnoreCase]);
-  Scheme := StringReplace(Scheme,'>','',[]);
+  try
+    SL := TStringList.Create;
+    SL.Text := frmMain.http.Get('http://'+frmLogin.cbServer.Text+'/wormageddonweb/RequestChannelScheme.asp?Channel='+ StringReplace(frmLogin.cbchan.Text,'#','',[]) );
+    Scheme := StringReplace(SL[0],'<SCHEME=','',[rfIgnoreCase]);
+    Scheme := StringReplace(Scheme,'>','',[]);
+    Sl.Free;
+  except
+    frmMain.AddRichLine(frmmain.rechat,'Could not get channel scheme.');
+  end;
 
   if frmSettings.cbGetIP.Checked then begin  // Get network settings
     ini := TIniFile.Create(GetWindir+'\win.ini');
     try
+     ini := TIniFile.Create(GetWindir+'\win.ini');
      IP := ini.ReadString('NetSettings', 'LocalAddress', 'address-not-configured')+':'+ini.ReadString('NetSettings', 'HostingPort', '17011');
     finally
      ini.Free;
     end;
   end else
+   try
     IP := Trim(http.Get('http://djlol.dk/ipaddress.php'));  // Otherwise, just get the public IP
+   except
+    frmMain.AddRichLine(frmmain.rechat,'Could not get your IP-address.');
+    Exit;
+   end;
 
-  HostedGameName := 'ß'+StringReplace(edname.Text,' ','_',[rfReplaceAll]); // This is a beta-game after all (and we can't have spaces now can we?)
+  HostedGameName := 'ß'+StringReplace(edname.Text,' ','_',[rfReplaceAll]);
 
   try
    http.Get('http://'+frmLogin.cbServer.Text+'/wormageddonweb/Game.asp?Cmd=Create&Name='+ HostedGameName +'&HostIP='+IP+'&Nick='+frmLogin.edUser.Text+'&Chan='+ StringReplace(frmlogin.cbchan.Text,'#','',[]) +'&Loc='+ IntToStr(frmLogin.cbflag.ItemIndex) +'&Type=0&Pass=0');
-    // Team17's servers returns a serverlist with Game.asp.
-    // TheCyberShadow's does not. Hence, we request a GameList to get the GameID
-    // - because headers in Indy's http client is tricky to do
+   SL := TStringList.Create;
    SL.Text := http.Get('http://'+frmLogin.cbServer.Text+'/wormageddonweb/GameList.asp?Channel='+StringReplace(frmLogin.cbchan.Text,'#','',[]));
-  except
-   frmMain.AddRichLine(frmMain.rechat,'Could not contact the server to add a game.');
-  end;
 
-  W  := TWords.Create; // This finds the GameID of the last game hosted by the user (in case ProSnooper failed in deleting a game)
-  for I := 1 to Sl.Count-2 do begin
+   W := TWords.Create; // search for games matching the users
+   for I := 1 to Sl.Count-2 do begin
      W.Text := Sl[I];
+     if W[3] = IP then
+      if W[2] = frmLogin.eduser.Text then
+       GameID := W[7];
+   end;
 
-     if W[3] = IP then  // If there's an ip that matches the user
-      if W[2] = frmLogin.eduser.Text then // If the nick matches the user
-       GameID := W[7];  // Then the game should be the users', and we set the GameID
+   SL.Free;
+  except
+   frmMain.AddRichLine(frmMain.rechat,'Could not add game.');
   end;
 
   HostedGameID := GameID;
 
-  if frmSettings.cbHostGameAnn.Checked then begin // Because ProSnooper doesn't quit, we can announce the game.
-   frmMain.irc.SendCTCP(frmLogin.cbchan.Text, 'ACTION is hosting a game: ('+edName.Text+')'+#1);
-   frmmain.AddRichLine(frmmain.rechat,'<pcol='+ColorToString(frmSettings.colActions.Selected)+'>'+frmmain.MakeTimeStamp+'<i>* '+frmmain.irc.IrcOptions.MyNick+' is hosting a game: ('+edName.Text+')</i></pcol>');
+  if frmSettings.cbHostGameAnn.Checked then begin // announce
+   frmMain.irc.SendCTCP(frmLogin.cbchan.Text, 'ACTION is hosting a game: '+HostedGameName+#1);
+   frmmain.AddRichLine(frmmain.rechat,frmmain.MakeTimeStamp+'<pcol='+ColorToString(frmSettings.colActions.Selected)+'><i>* <b>'+frmmain.irc.IrcOptions.MyNick+' is hosting a game: '+HostedGameName+'</i></b></pcol>');
   end;
 
-  if frmSettings.cbHostGameAway.Checked then // Engage away-mode!
-   if frmMain.IsAway = False then // If we're not already away, of course.
+  if frmSettings.cbHostGameAway.Checked then
+   if frmMain.IsAway = False then
    frmMain.GoAway(frmSettings.edHostGameAway.Text);
 
-  // Let's play some Worms: Armageddon.
-  ShellExecute(Handle, PChar('Open'), PChar('wa://?gameid='+GameID+'&scheme='+Scheme), nil, nil, SW_SHOW);
+  ConnStr := 'wa://?gameid='+GameID+'&scheme='+Scheme;
+
+ { if frmSettings.edExe.Text <> '' then
+   ShellExecute(Handle, PChar('Open'), PChar(frmSettings.edExe), PChar(ConnStr), nil, SW_SHOW)
+  else
+   ShellExecute(Handle, PChar('Open'), PChar(ConnStr), nil, nil, SW_SHOW);   }
+
+  if frmSettings.edExe.Text <> '' then
+   if LowerCase(ExtractFileName(frmsettings.edExe.Text)) = 'wormkit.exe' then
+    ShellExecute(Handle, PChar('Open'), PChar(frmSettings.edExe.Text), PChar('wa.exe '+ConnStr), nil, SW_SHOW)
+   else
+    ShellExecute(Handle, PChar('Open'), PChar(frmSettings.edExe.Text), PChar(ConnStr), nil, SW_SHOW)
+  else
+   ShellExecute(Handle, PChar('Open'), PChar(ConnStr), nil, nil, SW_SHOW);
 
   Timer1.Enabled := True; // remove game in 120 secs
   Timer2.Enabled := True; // remove game if WA.exe is closed
 
-  frmMain.tmrGames.Interval := 60000; // Less pressure on the server.
+  frmMain.tmrGamesTimer(nil);
+  frmMain.tmrGames.Enabled := False; // serverlist doesn't need to be updated while playing
 
   Close;
 end;
@@ -119,12 +142,12 @@ begin
   try
    http.Get('http://'+frmLogin.cbServer.Text+'/wormageddonweb/Game.asp?Cmd=Close&GameID='+HostedGameID+'&Name='+HostedGameName+'&HostID=&GuestID=&GameType=0');
   except
-   frmMain.AddRichLine(frmMain.rechat,'Couldn''t remove game');
+   frmMain.AddRichLine(frmMain.rechat,frmMain.MakeTimeStamp+'Couldn''t remove game.');
   end;
- Timer1.Enabled := False;
- Timer2.Enabled := False;
-   frmMain.tmrGames.Interval := 5000;
+   Timer1.Enabled := False;
+   Timer2.Enabled := False;
    frmMain.tmrGames.OnTimer(nil);
+   frmMain.tmrGames.Enabled := True;
 end;
 
 procedure TfrmHost.FormShow(Sender: TObject);

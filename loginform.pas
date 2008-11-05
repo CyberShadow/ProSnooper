@@ -1,3 +1,11 @@
+(*
+
+You have opened the ProSnooper 2 source code. Congratulations!
+
+Be sure to READ the included readme.txt.
+
+*)
+
 unit loginform;
 
 interface
@@ -6,7 +14,7 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, ImgList, ExtCtrls, IdBaseComponent,
   IdComponent, IdTCPConnection, IdTCPClient, inifiles, IdHTTP, Registry, XPMan, ShellAPI,
-  IdAntiFreezeBase, IdAntiFreeze, Menus;
+  Menus, Buttons;
 
 type
   TfrmLogin = class(TForm)
@@ -32,10 +40,7 @@ type
     XPManifest1: TXPManifest;
     Label5: TLabel;
     cbServer: TComboBox;
-    PopupMenu1: TPopupMenu;
-    Update1: TMenuItem;
-    N1: TMenuItem;
-    Paste1: TMenuItem;
+    Button4: TButton;
     procedure Button1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Button2Click(Sender: TObject);
@@ -45,7 +50,7 @@ type
     procedure Timer1Timer(Sender: TObject);
     procedure Image1Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure Update1Click(Sender: TObject);
+    procedure Button4Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -59,7 +64,7 @@ var
 
 implementation
 
-uses mainform, preferform, buddyform;
+uses mainform, preferform;
 
 {$R *.dfm}
 
@@ -147,10 +152,10 @@ end;
 procedure TfrmLogin.Button1Click(Sender: TObject);
 var
 IRCQuery: TStringList;
-IRCServ, IRCJoin: String;
-I: Integer;
+IRCServ, IRCJoin, IRCCountry: String;
+
 begin
-if (edUser.Text = '') or (cbChan.Text = '') or (cbServer.Text = '') then
+if (edUser.Text = '') {or (cbChan.Text = '')} or (cbServer.Text = '') then
  Exit
 else begin
 
@@ -177,28 +182,42 @@ else begin
 
      frmmain.irc.IrcOptions.MyNick := eduser.Text;
      frmmain.irc.IrcOptions.ServerHost := IRCServ;
-    { I := 49;
-     if cbflag.ItemIndex >= 50 then  // nationflags.bmp hack (doesn't work, see below)
-      I := 49;
-     else  }                          // this, however, doesn't work on the new flags fom the patches, but only with ProSnoop
-       I := cbflag.ItemIndex;        // [insert countrycodes for the new flags here]
-     // ShowMessage(inttostr(i));
 
-     frmmain.irc.IrcOptions.UserName := inttostr(I)+' '+inttostr(cbrank.ItemIndex)+' UK ProSnooper';
-     frmmain.irc.IrcOptions.Password := 'ELSILRACLIHP '; // The extra space is to ensure compatibility with TheCyberShadow's W:A Server.
+     case cbflag.ItemIndex of
+       51 : IRCCountry := 'CL';
+       52 : IRCCountry := 'CS';
+       53 : IRCCountry := 'SI';
+       54 : IRCCountry := 'LB';
+       55 : IRCCountry := 'MD';
+       56 : IRCCountry := 'UA';
+       57 : IRCCountry := 'LV';
+       58 : IRCCountry := 'SK';
+       59 : IRCCountry := 'CR';
+       60 : IRCCountry := 'EE';
+       61 : IRCCountry := 'CN';
+     else
+       IRCCountry := 'UK';
+     end;
+
+
+     frmmain.irc.IrcOptions.UserName := inttostr(cbflag.ItemIndex)+' '+inttostr(cbrank.ItemIndex)+' '+IRCCountry+' ProSnooper2';
+     frmmain.irc.IrcOptions.Password := 'ELSILRACLIHP '; 
      frmmain.irc.connect;
      frmmain.Caption := 'ProSnooper - '+cbchan.Text;
 
      frmMain.Show;
 
-     SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Username',rdString,edUser.Text);
-     SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Channel',rdString,cbChan.Text);
-     SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','ServerList',rdString,cbServer.Items.CommaText);
-     SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Server',rdString,cbServer.Text);
-     SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Flag',rdString,IntToStr(cbFlag.ItemIndex));
-     SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Rank',rdString,IntToStr(cbRank.ItemIndex));
-     SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','AutoLogin',rdString,BoolToStr(CheckBox2.Checked));
-
+     try
+       SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Username',rdString,edUser.Text);
+       SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Channel',rdString,cbChan.Text);
+       SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','ServerList',rdString,cbServer.Items.CommaText);
+       SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Server',rdString,cbServer.Text);
+       SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Flag',rdString,IntToStr(cbFlag.ItemIndex));
+       SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Rank',rdString,IntToStr(cbRank.ItemIndex));
+       SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','AutoLogin',rdString,BoolToStr(CheckBox2.Checked));
+     except
+       ShowMessage('Cannot access registry.');
+     end;
 end;
 
 
@@ -219,8 +238,7 @@ if FirstTime = True then begin // load settings if this is applaunch (we should 
  OptionsOn := False; //options toggle is off @ launch
 
   Height := 282;
-  if CheckBox2.Checked then
-   Timer1.Enabled := True; // you cant open windowss onshow, so we use a timer instead
+
 
   with TRegistry.Create do
     try
@@ -282,7 +300,7 @@ if FirstTime = True then begin // load settings if this is applaunch (we should 
         end;
 
         if ValueExists('Buddies') = True then begin
-          frmBuddies.lbBuddies.Items.CommaText := GetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Buddies');
+          frmSettings.lbBuddies.Items.CommaText := GetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Buddies');
         end;
 
         if ValueExists('FntSize') = True then begin
@@ -293,20 +311,39 @@ if FirstTime = True then begin // load settings if this is applaunch (we should 
           cbServer.Items.CommaText := GetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','ServerList');
           cbServer.Text := GetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Server');
         end;
+
+        if ValueExists('WindowState') = True then begin
+         if GetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','WindowState') = 'Maximized' then
+          frmMain.WindowState := wsMaximized
+         else if GetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','WindowState') = 'Minimized' then
+          frmMain.WindowState := wsMinimized
+         else
+          frmMain.WindowState := wsNormal;
+        end;
+
+        if ValueExists('Blink') = True then
+         frmSettings.cbBlink.Checked := StrToBool(GetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Blink'));
+
+        if ValueExists('Waexe') = True then
+         frmSettings.edExe.Text := GetRegistryData(HKEY_CURRENT_USER, '\Software\ProSnooper','Waexe');
+
+        if ValueExists('DisableScroll') = True then
+         frmSettings.cbDisableScroll.Checked := StrToBool(GetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','DisableScroll'));
     finally
      Free;
     end;
 
-   frmSettings.SetColors;
-   
    if eduser.Text = '' then begin  // WA username
      ini := TIniFile.Create(GetWindir+'\win.ini');
      try
-       eduser.Text := ini.ReadString('NetSettings', 'PlayerName', 'ProSnooperUser');
+       eduser.Text := ini.ReadString('NetSettings', 'PlayerName', '');
      finally
        ini.Free;
      end;
    end;
+
+   if CheckBox2.Checked then
+    Timer1.Enabled := True; // you cant open windowss onshow, so we use a timer instead
 
    FirstTime := False;
   end;
@@ -363,13 +400,15 @@ begin
  FirstTime := True;
 end;
 
-procedure TfrmLogin.Update1Click(Sender: TObject);
+procedure TfrmLogin.Button4Click(Sender: TObject);
 begin
+
  try
-  cbServer.Items.Text := http.Get('http://prosnooper.rndware.info/serverlist.asp');
+  cbServer.Items.Text := http.Get('http://prosnooper.rndware.info/serverlist.txt');
  except
   ShowMessage('Could not get serverlist.');
  end;
+
 end;
 
 end.

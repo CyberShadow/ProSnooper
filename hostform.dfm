@@ -1,6 +1,6 @@
 object frmHost: TfrmHost
-  Left = 472
-  Top = 170
+  Left = 216
+  Top = 120
   BorderStyle = bsDialog
   Caption = 'ProSnooper - Host game'
   ClientHeight = 103
@@ -11,6 +11,7 @@ object frmHost: TfrmHost
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
+  FormStyle = fsStayOnTop
   OldCreateOrder = False
   Position = poScreenCenter
   OnShow = FormShow

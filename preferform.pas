@@ -81,6 +81,18 @@ type
     Label18: TLabel;
     Bevel8: TBevel;
     edFntSize: TComboBox;
+    TabSheet6: TTabSheet;
+    lbBuddies: TListBox;
+    Button8: TButton;
+    Button9: TButton;
+    cbBlink: TCheckBox;
+    Button10: TButton;
+    Label22: TLabel;
+    edExe: TEdit;
+    Button11: TButton;
+    Bevel11: TBevel;
+    OpenDialog2: TOpenDialog;
+    cbDisableScroll: TCheckBox;
     procedure SetColors;
     procedure Button1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -90,10 +102,15 @@ type
     procedure Button2Click(Sender: TObject);
     procedure Button6Click(Sender: TObject);
     procedure Button7Click(Sender: TObject);
+    procedure Button9Click(Sender: TObject);
+    procedure Button8Click(Sender: TObject);
+    procedure Button10Click(Sender: TObject);
+    procedure mpNotify(Sender: TObject);
+    procedure Button11Click(Sender: TObject);
   private
     { Private declarations }
   public
-    { Public declarations }
+   procedure PlaySound(Path: String);
   end;
 
 var
@@ -107,12 +124,13 @@ uses mainform, gamedock, nickdock, loginform;
 
 procedure TfrmSettings.SetColors;
 begin
+ mainform.gmfrm.lvGames.Color := colBackground.Selected;
+ mainform.gmfrm.lvGames.Font.Color := coltext2.Selected;
  frmMain.rechat.Color := colBackground.Selected;
  frmMain.rechat.Font.Color := colText2.Selected;
  frmMain.Memo1.Color := colBackground.Selected;
  frmMain.Memo1.Font.Color := coltext2.Selected;
- mainform.gmfrm.lvGames.Color := colBackground.Selected;
- mainform.gmfrm.lvGames.Font.Color := coltext2.Selected;
+
  mainform.nickfrm.lvnicks.Color := colBackground.Selected;
  mainform.nickfrm.lvnicks.Font.Color := coltext2.Selected;
 end;
@@ -199,8 +217,20 @@ begin
  frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','SendAwayHiLite',
     rdString, BoolToStr(cbSendAwayHiLite.Checked));
 
-  frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','FntSize',
+ frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','FntSize',
     rdString, edFntSize.Text);
+
+ frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Buddies',
+    rdString,lbBuddies.Items.CommaText);
+
+ frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Blink',
+    rdString, BoolToStr(cbBlink.Checked));
+
+ frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','Waexe',
+    rdString, edExe.Text);
+
+ frmLogin.SetRegistryData(HKEY_CURRENT_USER,'\Software\ProSnooper','DisableScroll',
+    rdString, BoolToStr(cbDisableScroll.Checked));
 
  SetColors;
  Close;
@@ -231,35 +261,75 @@ end;
 
 procedure TfrmSettings.Button2Click(Sender: TObject);
 begin
-if edsndBuddy.Text <> '' then BEGIN
+  Button10.Show;
+if edsndBuddy.Text <> '' then begin
+ mp.Close;
  mp.FileName := edsndBuddy.Text;
  mp.Open;
- mp.Wait := True;
  mp.Play;
- mp.Close;
 end;
 end;
 
 procedure TfrmSettings.Button6Click(Sender: TObject);
 begin
+  Button10.Show;
 if edsndHiLite.Text <> '' then begin
+ mp.Close;
  mp.FileName := edsndHiLite.Text;
  mp.Open;
- mp.Wait := True;
  mp.Play;
- mp.Close;
 end;
 end;
 
 procedure TfrmSettings.Button7Click(Sender: TObject);
 begin
+  Button10.Show;
 if edsndMsg.Text <> '' then begin
+ mp.Close;
  mp.FileName := edsndMsg.Text;
  mp.Open;
- mp.Wait := True;
  mp.Play;
- mp.Close;
+
 end;
+end;
+
+procedure TfrmSettings.Button9Click(Sender: TObject);
+var
+ S: String;
+begin
+ if InputQuery('Add a buddy','Enter the nickname your buddy uses.',S) then
+  lbBuddies.Items.Add(S);
+end;
+
+procedure TfrmSettings.Button8Click(Sender: TObject);
+begin
+if lbBuddies.ItemIndex <> -1 then
+ lbBuddies.Items.Delete(lbBuddies.ItemIndex);
+end;
+
+procedure TfrmSettings.Button10Click(Sender: TObject);
+begin
+ mp.Stop;
+ Button10.Hide;
+end;
+
+procedure TfrmSettings.mpNotify(Sender: TObject);
+begin
+ if mp.Mode <> mpPlaying then
+  Button10.Hide;
+
+ mp.Notify := True;
+end;
+
+procedure TfrmSettings.PlaySound(Path: String);
+begin
+
+end;
+
+procedure TfrmSettings.Button11Click(Sender: TObject);
+begin
+ if OpenDialog2.Execute then
+  edExe.Text := OpenDialog2.FileName;
 end;
 
 end.
