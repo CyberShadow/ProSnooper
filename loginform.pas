@@ -1,8 +1,8 @@
 (*
 
-You have opened the ProSnooper 2 source code. Congratulations!
+This program is licensed under the rndware License, which can be found in LICENSE.TXT
 
-Be sure to READ the included readme.txt.
+Copyright (c) Simon Hughes 2007-2008
 
 *)
 

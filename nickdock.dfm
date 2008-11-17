@@ -23,8 +23,8 @@ object frmdkNickList: TfrmdkNickList
   object lvNicks: TListView
     Left = 0
     Top = 0
-    Width = 115
-    Height = 46
+    Width = 111
+    Height = 41
     Align = alClient
     Color = clMaroon
     Columns = <

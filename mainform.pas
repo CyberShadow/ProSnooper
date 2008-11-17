@@ -1,3 +1,10 @@
+(*
+
+This program is licensed under the rndware License, which can be found in LICENSE.TXT
+
+Copyright (c) Simon Hughes 2007-2008
+
+*)
 unit mainform;
 
 interface
@@ -1154,7 +1161,7 @@ end;
 
 procedure TfrmMain.tmrWhoCompatTimer(Sender: TObject);
 begin
-  // TheCyberShadow's server can't handle WHOIS, so we send out a WHO once in a while.
+  // TheCyberShadow's server can't handle WHOIS, so we send out a WHO once in a while to sync the nicklist
   irc.Quote('WHO '+frmLogin.cbchan.Text);
 end;
 

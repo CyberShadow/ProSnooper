@@ -1,10 +1,17 @@
+(*
+
+This program is licensed under the rndware License, which can be found in LICENSE.TXT
+
+Copyright (c) Simon Hughes 2007-2008
+
+*)
 unit nickdock;
 
 interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, Dockpanel, ImgList, ComCtrls, Menus;
+  Dialogs, StdCtrls, DockPanel, ImgList, ComCtrls, Menus;
 
 type
   TfrmdkNickList = class(TDockableForm)

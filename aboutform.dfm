@@ -1,9 +1,9 @@
 object frmAbout: TfrmAbout
-  Left = 213
-  Top = 124
+  Left = 428
+  Top = 266
   BorderStyle = bsDialog
   Caption = 'ProSnooper - About'
-  ClientHeight = 288
+  ClientHeight = 289
   ClientWidth = 393
   Color = clBtnFace
   Font.Charset = ANSI_CHARSET
@@ -4949,9 +4949,9 @@ object frmAbout: TfrmAbout
   object Label1: TLabel
     Left = 16
     Top = 152
-    Width = 97
+    Width = 157
     Height = 13
-    Caption = 'By Simon Hughes'
+    Caption = #169' Simon Hughes 2007-2008'
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -4973,10 +4973,9 @@ object frmAbout: TfrmAbout
   object Label3: TLabel
     Left = 16
     Top = 216
-    Width = 56
+    Width = 3
     Height = 13
     Alignment = taCenter
-    Caption = '$VERSION$'
   end
   object Bevel2: TBevel
     Left = 0

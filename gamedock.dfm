@@ -1,7 +1,7 @@
 object frmdkGmList: TfrmdkGmList
   Left = 297
   Top = 106
-  Width = 112
+  Width = 120
   Height = 71
   Cursor = crSizeAll
   BorderIcons = [biMinimize, biMaximize]
@@ -23,8 +23,8 @@ object frmdkGmList: TfrmdkGmList
   object lvGames: TListView
     Left = 0
     Top = 0
-    Width = 104
-    Height = 44
+    Width = 108
+    Height = 39
     Align = alClient
     Color = clMaroon
     Columns = <

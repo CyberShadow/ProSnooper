@@ -1,6 +1,6 @@
 object frmSettings: TfrmSettings
-  Left = 219
-  Top = 122
+  Left = 498
+  Top = 150
   BorderStyle = bsDialog
   Caption = 'ProSnooper - Settings'
   ClientHeight = 424

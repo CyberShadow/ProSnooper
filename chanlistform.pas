@@ -1,3 +1,10 @@
+(*
+
+This program is licensed under the rndware License, which can be found in LICENSE.TXT
+
+Copyright (c) Simon Hughes 2007-2008
+
+*)
 unit chanlistform;
 
 interface

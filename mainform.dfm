@@ -1,6 +1,6 @@
 object frmMain: TfrmMain
-  Left = 219
-  Top = 122
+  Left = 222
+  Top = 123
   Width = 702
   Height = 469
   Caption = 'ProSnooper'
@@ -236,9 +236,9 @@ object frmMain: TfrmMain
     TabPosition = tpTop
   end
   object lbIgnore: TListBox
-    Left = 120
-    Top = 48
-    Width = 25
+    Left = 128
+    Top = 64
+    Width = 9
     Height = 9
     ItemHeight = 13
     TabOrder = 7
@@ -359,7 +359,7 @@ object frmMain: TfrmMain
   object lbIgnoreAway: TListBox
     Left = 120
     Top = 64
-    Width = 25
+    Width = 9
     Height = 9
     ItemHeight = 13
     TabOrder = 9
