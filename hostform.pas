@@ -57,8 +57,6 @@ procedure TfrmHost.Button1Click(Sender: TObject);
 var
  IP, Scheme, GameID, Connstr: String;
  SL: TStringList;
- I: Integer;
- W: TWords;
  Ini: TIniFile;
 begin
   Timer1.OnTimer(nil); //remove last game
@@ -92,19 +90,9 @@ begin
   HostedGameName := 'ß'+StringReplace(edname.Text,' ','_',[rfReplaceAll]);
 
   try
-   http.Get('http://'+frmLogin.cbServer.Text+'/wormageddonweb/Game.asp?Cmd=Create&Name='+ HostedGameName +'&HostIP='+IP+'&Nick='+frmLogin.edUser.Text+'&Chan='+ StringReplace(frmlogin.cbchan.Text,'#','',[]) +'&Loc='+ IntToStr(frmLogin.cbflag.ItemIndex) +'&Type=0&Pass=0');
-   SL := TStringList.Create;
-   SL.Text := http.Get('http://'+frmLogin.cbServer.Text+'/wormageddonweb/GameList.asp?Channel='+StringReplace(frmLogin.cbchan.Text,'#','',[]));
-
-   W := TWords.Create; // search for games matching the users
-   for I := 1 to Sl.Count-2 do begin
-     W.Text := Sl[I];
-     if W[3] = IP then
-      if W[2] = frmLogin.eduser.Text then
-       GameID := W[7];
-   end;
-
-   SL.Free;
+   http.HandleRedirects := false;
+   http.Get('http://'+frmLogin.cbServer.Text+'/wormageddonweb/Game.asp?Cmd=Create&Name='+ HostedGameName +'&HostIP='+IP+'&Nick='+frmLogin.edUser.Text+'&Chan='+ StringReplace(frmlogin.cbchan.Text,'#','',[]) +'&Loc='+ IntToStr(frmLogin.cbflag.ItemIndex) +'&Type=0&Pass=0', [302]);
+   GameID := Copy(http.Response.RawHeaders.Values['SetGameId'], 3, MaxInt);
   except
    frmMain.AddRichLine(frmMain.rechat,'Could not add game.');
   end;
