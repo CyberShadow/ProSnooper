@@ -81,7 +81,7 @@ begin
     end;
   end else
    try
-    IP := Trim(http.Get('http://djlol.dk/ipaddress.php'));  // Otherwise, just get the public IP
+    IP := Trim(http.Get('http://thecybershadow.net/ip.php'));  // Otherwise, just get the public IP
    except
     frmMain.AddRichLine(frmmain.rechat,'Could not get your IP-address.');
     Exit;
