@@ -13,7 +13,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, ImgList, ExtCtrls, IdBaseComponent,
-  IdComponent, IdTCPConnection, IdTCPClient, inifiles, IdHTTP, Registry, XPMan, ShellAPI,
+  IdComponent, IdTCPConnection, IdTCPClient, inifiles, IdHTTP, Registry, ShellAPI,
   Menus, Buttons;
 
 type
@@ -37,7 +37,6 @@ type
     Timer1: TTimer;
     http: TIdHTTP;
     Bevel2: TBevel;
-    XPManifest1: TXPManifest;
     Label5: TLabel;
     cbServer: TComboBox;
     Button4: TButton;

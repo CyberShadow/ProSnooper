@@ -7812,8 +7812,4 @@ object frmLogin: TfrmLogin
     Left = 3
     Top = 3
   end
-  object XPManifest1: TXPManifest
-    Left = 35
-    Top = 3
-  end
 end
